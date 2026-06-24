@@ -13,7 +13,7 @@ mcp = FastMCP("CyberThreatIntel")
 
 # Chroma DB setup
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
-collection = chroma_client.get_or_create_collection(name="kb")
+collection = chroma_client.get_or_create_collection(name="knowledge_base")
 
 # Load KB files if collection is empty
 if collection.count() == 0:

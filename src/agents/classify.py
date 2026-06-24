@@ -18,7 +18,8 @@ def classify_node(state: State) -> Dict[str, Any]:
     max_risk_score = 0
     
     for t in threats:
-        risk_score = 0
+        # Base score from LLM confidence (0 to 40)
+        risk_score = int(getattr(t, "confidence", 0.5) * 40)
         
         # 1. Malicious IP (+30)
         abuse_score = getattr(t, "abuse_confidence_score", 0) or 0

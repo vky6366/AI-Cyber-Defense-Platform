@@ -6,6 +6,7 @@ class LogEntry(BaseModel):
     timestamp: str
     ip: str
     event: str
+    kwargs: Dict[str, Any] = Field(default_factory=dict)
 
 class Threat(BaseModel):
     threat: str

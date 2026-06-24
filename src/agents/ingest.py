@@ -13,7 +13,14 @@ def ingest_node(state: State) -> Dict[str, Any]:
     for log in raw_logs:
         try:
             # Basic validation using Pydantic
-            entry = LogEntry(**log)
+            core_fields = {"timestamp", "ip", "event"}
+            kwargs = {k: v for k, v in log.items() if k not in core_fields}
+            entry = LogEntry(
+                timestamp=log.get("timestamp"),
+                ip=log.get("ip"),
+                event=log.get("event"),
+                kwargs=kwargs
+            )
             clean_logs.append(entry)
         except Exception as e:
             # In a real system, we might log the error and continue or send to dead-letter queue

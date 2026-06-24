@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Cyber Defense Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <main class="container glass-panel">
+        <header>
+            <div class="logo">
+                <span class="icon">🛡️</span>
+                <h1>AI Cyber Defense <span class="highlight">Platform</span></h1>
+            </div>
+            <div class="status-indicator">
+                <div class="dot active" id="system-status"></div>
+                <span id="status-text">System Active</span>
+            </div>
+        </header>
+
+        <section class="dashboard">
+            <!-- Left Column: Submit Logs -->
+            <div class="panel submit-panel glass-card">
+                <h2>Analyze Security Logs</h2>
+                <p>Paste raw JSON logs to trigger the LangGraph analysis.</p>
+                <textarea id="log-input" placeholder='[
+  {
+    "event": "login_failed",
+    "ip": "192.168.1.100",
+    "timestamp": "2023-10-01T12:00:00Z"
+  }
+]'></textarea>
+                <button id="analyze-btn" class="btn primary">
+                    <span class="btn-text">Run Analysis</span>
+                    <div class="loader" style="display: none;"></div>
+                </button>
+                <div id="analyze-result" class="result-message"></div>
+            </div>
+
+            <!-- Right Column: Incidents List -->
+            <div class="panel incidents-panel glass-card">
+                <div class="panel-header">
+                    <h2>Active Incidents</h2>
+                    <button id="refresh-btn" class="btn icon-btn" title="Refresh">🔄</button>
+                </div>
+                <div id="incidents-list" class="incidents-list">
+                    <!-- Dynamic Incident Cards will be injected here -->
+                    <div class="empty-state">Loading incidents...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Incident Modal -->
+        <div id="incident-modal" class="modal-overlay" style="display: none;">
+            <div class="modal glass-panel">
+                <button id="close-modal" class="btn icon-btn close-btn">✕</button>
+                <h2 id="modal-title">Incident Details</h2>
+                <div class="modal-content">
+                    <div class="badge" id="modal-severity">Severity</div>
+                    <div class="badge" id="modal-status">Status</div>
+                    
+                    <h3>Threat Report</h3>
+                    <div class="markdown-body" id="modal-report"></div>
+                    
+                    <h3>Approval Action</h3>
+                    <div id="approval-section" class="approval-controls" style="display: none;">
+                        <textarea id="analyst-notes" placeholder="Analyst notes (optional)"></textarea>
+                        <div class="action-buttons">
+                            <button id="approve-btn" class="btn success">Approve Action</button>
+                            <button id="reject-btn" class="btn danger">Reject</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

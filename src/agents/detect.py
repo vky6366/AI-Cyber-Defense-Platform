@@ -19,8 +19,8 @@ def detect_node(state: State) -> Dict[str, Any]:
     if not clean_logs:
         return {"threats": []}
 
-    # Format logs for the LLM
-    logs_str = "\n".join([f"{log.timestamp} | {log.ip} | {log.event}" for log in clean_logs])
+    # Format logs for the LLM including arbitrary kwargs like cmdline
+    logs_str = "\n".join([f"{log.timestamp} | {log.ip} | {log.event} | {log.kwargs}" for log in clean_logs])
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", "You are a Cyber Threat Hunter. Analyze the following security logs and detect any threats such as brute-force attacks or suspicious behaviors. Output a list of identified threats with confidence scores. Return an empty list if there are no threats."),

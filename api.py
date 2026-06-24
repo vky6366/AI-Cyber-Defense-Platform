@@ -1,6 +1,8 @@
 import os
 import uuid
+import warnings
 import logging
+import traceback
 from typing import List, Dict, Any, Optional
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -16,27 +18,57 @@ from src.graph import build_graph
 # Try to use LangGraph's Postgres checkpointer, fallback to memory if error
 try:
     from langgraph.checkpoint.postgres import PostgresSaver
-    from psycopg_pool import ConnectionPool
+    from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+    from psycopg_pool import ConnectionPool, AsyncConnectionPool
+    
+    # Suppress async pool deprecation warning since we use it at module level
+    warnings.filterwarnings("ignore", category=RuntimeWarning, module="psycopg_pool")
+    logging.getLogger("psycopg.pool").setLevel(logging.ERROR)
+    
     import psycopg
     DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:Kalyan@localhost:5432/cyberdefense")
     
-    # Run setup with autocommit=True to avoid transaction errors
+    # Run setup synchronously with autocommit=True to avoid transaction errors
     with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         PostgresSaver(conn).setup()
         
-    pool = ConnectionPool(conninfo=DATABASE_URL)
-    checkpointer = PostgresSaver(pool)
+    # Create the async pool (unopened) and async checkpointer for ainvoke
+    pool = AsyncConnectionPool(conninfo=DATABASE_URL, open=False)
+    checkpointer = AsyncPostgresSaver(pool)
     USING_POSTGRES_CHECKPOINTER = True
 except Exception as e:
     logger.warning(f"Failed to setup PostgresSaver ({e}). Falling back to MemorySaver.")
     from langgraph.checkpoint.memory import MemorySaver
     checkpointer = MemorySaver()
     USING_POSTGRES_CHECKPOINTER = False
+    pool = None
 
 # Initialize Database
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="AI Cyber Defense Platform API", version="1.0.0")
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if USING_POSTGRES_CHECKPOINTER and pool:
+        await pool.open()
+    yield
+    if USING_POSTGRES_CHECKPOINTER and pool:
+        await pool.close()
+
+app = FastAPI(title="AI Cyber Defense Platform API", version="1.0.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 workflow = build_graph()
 # Compile with checkpointer and interrupt before approval
@@ -72,7 +104,9 @@ async def analyze_logs(request: AnalyzeRequest, db: Session = Depends(get_db)):
     try:
         final_state = await graph_app.ainvoke(initial_state, config=config)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Graph execution failed: {e}")
+        error_trace = traceback.format_exc()
+        logger.error(f"Graph execution failed: {error_trace}")
+        raise HTTPException(status_code=500, detail=f"Graph execution failed: {e}\n{error_trace}")
         
     # Check if incident was created in DB
     incident = db.query(Incident).filter(Incident.incident_id == incident_id).first()
@@ -199,3 +233,8 @@ def check_ip(request: IPRequest):
         return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+import os
+if os.path.exists('frontend'):
+    app.mount('/', StaticFiles(directory='frontend', html=True), name='frontend')
+
