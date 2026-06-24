@@ -1,0 +1,32 @@
+{
+  "brute force": {
+    "technique_id": "T1110",
+    "name": "Brute Force",
+    "tactic": "Credential Access"
+  },
+  "failed login": {
+    "technique_id": "T1110",
+    "name": "Brute Force",
+    "tactic": "Credential Access"
+  },
+  "sql injection": {
+    "technique_id": "T1190",
+    "name": "Exploit Public-Facing Application",
+    "tactic": "Initial Access"
+  },
+  "credential stuffing": {
+    "technique_id": "T1110.004",
+    "name": "Credential Stuffing",
+    "tactic": "Credential Access"
+  },
+  "phishing": {
+    "technique_id": "T1566",
+    "name": "Phishing",
+    "tactic": "Initial Access"
+  },
+  "privilege escalation": {
+    "technique_id": "TA0004",
+    "name": "Privilege Escalation",
+    "tactic": "Privilege Escalation"
+  }
+}
